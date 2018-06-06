@@ -8,6 +8,7 @@
         "type": "git",
         "url": "https://gitlab.com/supakorn-ras/vscode-lang-asymptote"
     },
+    "license": "SEE LICENSE IN LICENSE",
     "engines": {
         "vscode": "^1.23.0"
     },
