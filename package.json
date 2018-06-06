@@ -2,7 +2,7 @@
     "name": "asymptote",
     "displayName": "Asymptote",
     "description": "Support for Asymptote, a vector graphics language.",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "publisher": "supakornras",
     "repository": {
         "type": "git",
