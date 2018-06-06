@@ -4,8 +4,7 @@ _(This extension is converted from atom language-asymptote package.
 It is based on the same grammar. This README is verbatim copied
 from the original Atom package.)_
 
-Asymptote is a powerful C-based Vector Graphics Language that can be integrated into LaTeX documents. This package adds syntax highlighting functionality to Atom, a text editor. Other features such as automatic compile are planned, but not yet implemented.
-
+Asymptote is a powerful C-based Vector Graphics Language that can be integrated into LaTeX documents.
 The official website of Asymptote is at <http://asymptote.sourceforge.net/>.
 
 ## Features
