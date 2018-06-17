@@ -1,2 +1,7 @@
 node_modules
 *.vsix
+vsc-extension-quickstart.md
+
+tools/asy.list
+tools/publish
+# syntaxes/*.tmLanguage.json
