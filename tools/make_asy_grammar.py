@@ -76,59 +76,29 @@ def main():
 
     base_pattern = generate_base_pattern()
     base_grammar['patterns'] = base_pattern
-    matched_words = set()
 
-    asy_list_raw = input()
+    asy_list_raw = sys.stdin.read()
 
-    operator_list = []
+    operator_list = set()
+    const_list = set()
+    type_list = set()
 
-    print(json.dumps(base_grammar, indent=4))
-    return
+    # print(json.dumps(base_grammar, indent=4))
 
     for asydef in asy_list_raw.splitlines():
-        pass
+        if parse_constant(asydef) is not None:
+            const_list.add(parse_constant(asydef))
+        elif parse_type(asydef) is not None:
+            type_list.add(parse_type(asydef))
+        elif parse_operators(asydef) is not None:
+            operator_list.add(parse_operators(asydef))
 
-    for asy_def in asy_list_raw.split(';'):
-        asy_def = asy_def.strip()
-        if not asy_def:
-            continue
-        asy_type, asy_signature = asy_def.split(' ', 1)
-        if '(' in asy_signature:
-            if 'operator' in asy_signature:
-                if 'init()' in asy_signature: # type
-                    match_word = str.format('\\b({0})\\b', asy_type)
-                    match_type = 'storage.type'
-                elif 'cast(' not in asy_signature: # operator
-                    operator_signature = asy_signature.split(' ', 1)[1]
-                    operator_symbol = operator_signature.split('(')[0]
-                    parsed_operator = []
-                    for character in operator_symbol:
-                        if character in {'|', '+', '*', '$', '.', '\\', '^'}:
-                            parsed_operator.append('\\' + character)
-                        else:
-                            parsed_operator.append(character)
-                    parsed_op_text = ''.join(parsed_operator)
-                    if parsed_op_text.isalpha():
-                        match_word = str.format('\\b({0})\\b', parsed_op_text)
-                    else:
-                        if parsed_op_text not in matched_words and ' ' not in parsed_op_text:
-                            matched_words.add(parsed_op_text)
-                            operator_list.append(parsed_op_text)
-                        continue
-                    match_type = 'keyword.operator'
-            else: # function
-                function_name = asy_signature.split('(')[0]
-                match_word = str.format('\\b({0})\\b', function_name)
-                match_type = 'support.function'
-        else: # constant
-            match_word = str.format('\\b({0})\\b', asy_signature)
-            match_type = 'constant.language'
-        if match_word not in matched_words:
-            base_pattern.append({
-            'match' : match_word,
-            'name' : match_type
-            })
-            matched_words.add(match_word)
+    print(const_list)
+    print(type_list)
+    print(operator_list)
+    return 0
+
+
 
     base_pattern.append({
     'match': '|'.join(operator_list),
@@ -139,6 +109,31 @@ def main():
     final_output = json.dumps(base_pattern, indent=4)
 
     print(final_output)
+
+def parse_constant(line):
+    # parse constant in <type><[]*> <kw>;
+    # see https://regex101.com/r/dSExOo/3/ for format. 
+    match_data = re.match(r"^[a-zA-Z_]\w*\s*(?:\[\]\s*)*\w*\s+([a-zA-Z_]\w*)\s*;$", line)
+    if match_data is None:
+        return None
+    else:
+        return match_data.group(1)
+
+def parse_type(line):
+    # See https://regex101.com/r/sf4Mj7/1 for format
+    match_data = re.match(r"^([a-zA-Z_]\w*)\s*operator\s*init\s*\(\s*\)\s*;$", line)
+    if match_data is None:
+        return None
+    else:
+        return match_data.group(1)
+
+def parse_operators(line):
+    # See https://regex101.com/r/F9DUaQ/1 for format. 
+    match_data = re.match(r"^(?:[a-zA-Z_]\w*)\s*operator\s*([\W]+)\(.*\);$", line)
+    if match_data is None:
+        return None
+    else:
+        return match_data.group(1)
 
 if __name__ == '__main__':
     sys.exit(main() or 0)
