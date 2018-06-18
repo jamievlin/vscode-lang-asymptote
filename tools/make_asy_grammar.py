@@ -9,59 +9,62 @@ import re
 def generate_base_pattern():
     return [
         { 
-            'match': '\/\/.*$', 
+            'match': r'//.*$', 
             'name':'comment.line.double-slash' 
         },
         {
-            'match' : '\\b(const|static|explicit|struct|typedef)\\b', 
+            'match' : r'\b(const|static|explicit|struct|typedef)\b', 
             'name' : 'storage.modifier'
         },
         { 
-            'begin' : '/\\*', 'end' : '\\*/', 
-            'name' : 'comment.block' },
+            'begin' : r'/\*', 
+            'end' : r'\*/', 
+            'name' : 'comment.block' 
+        },
         {
-            'match':'([:blank:]{1}?)("{1})(.*)("{1})',
+            'match': r'\s+"(.*)"',
             'name': 'string.quoted.double'
         },
         {
-            'begin':'([^[:blank:]]{1}?)("{1})',
-            'beginCaptures':
-                {
-                    '2': 'string.quoted.double'
-                },
-            'end':'("{1})',
-            'endCaptures':
-                {
-                    '1': 'string.quoted.double'
-                },
-            'patterns': [ {'include': 'text.tex.latex'} ]
-        },
+            'begin': r'(?<!\s)"{1}',
+            'end': r'"{1}', 
+            'name': 'string.quoted.double', 
+            'patterns': [
+                {'include': 'text.tex.latex'}
+            ]
+        }, 
         { 
-            'match' : '\'.*?\'', 
+            'match' : r'\'.*?\'', 
             'name' : 'string.quoted.single' },
         { 
-            'match' : '\\b(if|else|while|for|do|break|return|continue|unravel)\\b',
+            'match' : r'\b(if|else|while|for|do|break|return|continue|unravel)\b',
             'name' : 'keyword.control' },
         { 
-            'match' :'\\b(new|operator)\\b', 
+            'match' : r'\b(new|cast|ecast|init)\b', 
             'name' : 'keyword.operator' },
         { 
-            'match' : '\\b(import|include|as|access|from)\\b',
+            'match' : r'\b(import|include|as|access|from|operator|quote)\b',
             'name' : 'keyword.other' 
         },
         { 
-            'match' : '\\b(\\d*)(\\.?)\\d+', 
+            'match' : r'\b(\d*)(\.?)\d+', 
             'name' : 'constant.numeric'
         }, 
         {
             # see https://regex101.com/r/IViUjM/1 for info
             
-            'match': '\\b([a-zA-Z_]\\w*)\\s*\\(', 
+            'match': r'\b([a-zA-Z_]\w*)\s*\(', 
             'captures': {
                 '1': {
                     'name': 'entity.name.function'
                 }
             }
+        }, 
+        {
+            # quote 
+            'begin': r'\b(quote)\s*\{',
+            'end': r'\}',
+            'patterns': [{'include': '$self'}]
         }
     ]
 
@@ -69,19 +72,23 @@ def main():
     base_grammar = {
         '$schema': 'https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json', 
         'scopeName': 'source.asymptote',
-        'name': 'Asymptote'
+        'name': 'Asymptote', 
+        'foldingStartMarker': r'(\{|\[|\()\s*$', 
+        'foldingStopMarker': r'^\s*(\}|\]\))', 
+        'repository': {
+
+        }
     }
 
     # basic semantics not covered by asy -l
 
     base_pattern = generate_base_pattern()
-    base_grammar['patterns'] = base_pattern
-
     asy_list_raw = sys.stdin.read()
 
-    operator_list = set()
+    operator_list = {'='}
     const_list = set()
     type_list = set()
+    prim_type_list = {'code'}
 
     # print(json.dumps(base_grammar, indent=4))
 
@@ -93,20 +100,47 @@ def main():
         elif parse_operators(asydef) is not None:
             operator_list.add(parse_operators(asydef))
 
-    print(const_list)
-    print(type_list)
-    print(operator_list)
-    return 0
+    # setup repos
 
+    if const_list:
+        base_grammar['repository']['const_keywords'] = {
+            'match': r'\b({0})\b'.format('|'.join([re.escape(kw) for kw in const_list])), 
+            'name': 'support.constant'
+        }
+        base_pattern.append(
+            {'include': '#const_keywords'}
+        )
 
+    if type_list:
+        base_grammar['repository']['type_keywords'] = {
+            'match': r'\b({0})\b'.format('|'.join([re.escape(kw) for kw in type_list])),
+            'name': 'support.class'
+        }
+        base_pattern.append(
+            {'include': '#type_keywords'}
+        )
 
-    base_pattern.append({
-    'match': '|'.join(operator_list),
-    'name' : 'keyword.operator'
-    })
+    if operator_list:
+        base_grammar['repository']['operator_keywords'] = {
+            'match': r'({0})'.format('|'.join([re.escape(kw) for kw in operator_list])),
+            'name': 'keyword.operator'
+        }
+        base_pattern.append(
+            {'include': '#operator_keywords'}
+        )
 
+    if prim_type_list:
+        base_grammar['repository']['prim_type_keywords'] = {
+            'match': r'\b({0})\b'.format('|'.join([re.escape(kw) for kw in prim_type_list])),
+            'name': 'storage.type'
+        }
+        base_pattern.append(
+            {'include': '#prim_type_keywords'}
+        )
+
+    
     base_grammar['patterns'] = base_pattern
-    final_output = json.dumps(base_pattern, indent=4)
+    final_output = json.dumps(base_grammar, indent=4)
 
     print(final_output)
 
