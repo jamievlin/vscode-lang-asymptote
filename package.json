@@ -29,6 +29,57 @@
                 "configuration": "./language-configuration.json"
             }
         ],
+        "breakpoints": [
+            {
+                "language": "asymptote"
+            }
+        ],
+        "debuggers": [
+            {
+                "type": "asy",
+                "label": "Asymptote",
+                
+                "program": "./asydbg/__main__.py", 
+
+                "windows": {
+                    "runtime": "python"
+                }, 
+
+                "runtime": "python3",
+
+                "configurationAttributes": {
+                    "launch": {
+                        "required": ["program"], 
+                        "properties": {
+                            "program": {
+                                "type": "string", 
+                                "description": "Path to Asymptote File", 
+                                "default": "${file}"
+                            }
+                        }
+                    } 
+                },
+
+                "initialConfigurations": [
+                    {
+                        "type": "asy",
+                        "request": "launch", 
+                        "name": "Asymptote File", 
+                        "program": "${file}" 
+                    }
+                ], 
+
+                "configurationSnippets": [
+                    {
+                        "label": "Asymptote: Launch", 
+                        "description": "A configuration for lanching asympote file. ", 
+                        "body": {
+                            "program": "Asy file"
+                        }
+                    }
+                ]
+            }
+        ],
         "grammars": [
             {
                 "language": "asymptote",
