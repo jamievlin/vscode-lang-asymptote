@@ -39,8 +39,8 @@
                 "type": "asy",
                 "label": "Asymptote",
                 
-                "program": "./asydbg/__main__.py", 
-
+                "program": "./asydbg",
+                
                 "windows": {
                     "runtime": "python"
                 }, 
