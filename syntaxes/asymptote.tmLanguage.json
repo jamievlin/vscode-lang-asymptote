@@ -6,19 +6,19 @@
     "foldingStopMarker": "^\\s*(\\}|\\]\\))",
     "repository": {
         "const_keywords": {
-            "match": "\\b(defaultfilename|braceinnerangle|camerafactor|spinner|deepred|grey|inches|realDigits|UnFill|defaultpen|arrowlength|mediumred|SSE|fuchsia|black|currentpicture|version|currentpatterns|darkgreen|W|yellow|NE|arrowhookfactor|arrow2sizelimit|NW|NoSide|arrowdir|FillDraw|SE|zerowinding|MidPoint|viewportmargin|roundcap|palegray|realMax|Move|arrowfactor|barfactor|deepgreen|lightolive|squarepen|blue|red|LeftSide|heavycyan|nan|arrowsizelimit|intMax|plain_scaling|heavyred|lightmagenta|darkcyan|SW|pi|deepyellow|purple|currentprojection|legendvskip|Aspect|magenta|darkgray|basealign|I|olive|royalblue|debugging|SuppressQuiet|chartreuse|circleprecision|labelmargin|lightcyan|Suppress|springgreen|green|heavygreen|dotfactor|heavyblue|E|palecyan|cyan|mediummagenta|defaultformat|legendhskip|EndPoint|Cyan|debuggerlines|longdashdotted|pt|darkgrey|NoAlign|Fill|lightgrey|JOIN_OUT|darkred|legendmargin|S|NNW|mediumgrey|ESE|pink|nullpath|dotframe|lightblue|defaultseparator|ENE|Draw|CCW|unitcircle|braceouterangle|ignore|legendlinelength|SSW|viewportsize|mediumgreen|beveljoin|JOIN_IN|heavygrey|deepblue|undefined|arcarrowangle|dot|deepmagenta|circlescale|longdashed|randMax|infinity|Black|Mark|Center|deepgray|realEpsilon|inch|orange|mediumblue|down|roundjoin|CW|bracedefaultratio|invert|right|deepgrey|SimpleHead|mediumgray|lightred|nullpen|invisible|realMin|gray|stdout|dashdotted|white|dashed|currentpen|solid|Allow|HookHead|arrowbarb|paleblue|mm|nobasealign|arrowangle|MarkFill|DefaultHead|VERSION|WNW|darkolive|NoFill|mediumcyan|palered|Yellow|sqrtEpsilon|diagnostics|mantissaBits|expansionfactor|palegreen|N|Label|settings|TeXHead|evenodd|Dotted|brown|identity4|palegrey|plain|file3|Align|mediumyellow|IgnoreAspect|darkmagenta|arrowtexfactor|palemagenta|bracemidangle|intMin|ocgindex|count|monoPen|left|unitsquare|WSW|inXasyMode|arcarrowfactor|paleyellow|inf|lightgreen|default|BeginPoint|shipped|legendmaxrelativewidth|nomarker|MarkPath|xformStack|squarecap|NNE|miterjoin|currentlight|plain_bounds|up|cm|darkbrown|heavygray|colorPen|Magenta|lightgray|plus|stdin|dotted|lightyellow|salmon|deepcyan|darkblue|MoveQuiet|extendcap|heavymagenta|cputimeformat|RightSide|bp)\\b",
+            "match": "\\b(deepmagenta|deepblue|Dotted|deepgray|left|arrowangle|identity4|yellow|realEpsilon|mediumyellow|darkred|invert|realDigits|arcarrowangle|defaultpen|default|red|arrowtexfactor|Allow|mantissaBits|Suppress|lightblue|settings|legendmargin|gray|royalblue|darkcyan|defaultfilename|heavygreen|SSW|olive|labelmargin|Yellow|palemagenta|spinner|invisible|sqrtEpsilon|lightmagenta|nan|palegray|infinity|nomarker|CCW|dotfactor|NoAlign|ESE|realMax|stdout|Fill|legendhskip|plain_scaling|mediumblue|beveljoin|lightgray|expansionfactor|SW|blue|legendvskip|heavyred|palecyan|bracedefaultratio|magenta|pt|longdashed|NNE|currentpatterns|NoSide|squarepen|NoFill|darkbrown|E|chartreuse|Move|Black|nullpen|version|arrowhookfactor|lightred|lightyellow|MarkFill|salmon|count|dashed|currentpicture|extendcap|bracemidangle|inXasyMode|defaultseparator|arrowlength|nullpath|zerowinding|lightcyan|VERSION|NW|cm|mediumred|N|lightgrey|plus|braceinnerangle|dot|BeginPoint|viewportmargin|evenodd|cputimeformat|circlescale|currentprojection|pink|Label|paleyellow|deepcyan|mediummagenta|defaultformat|roundcap|randMax|SuppressQuiet|braceouterangle|ocgindex|IgnoreAspect|miterjoin|unitcircle|Draw|dotted|right|palegrey|plain|Mark|inches|inch|LeftSide|Cyan|ignore|basealign|darkmagenta|grey|arcarrowfactor|NE|currentpen|mediumcyan|viewportsize|intMax|arrow2sizelimit|squarecap|CW|diagnostics|heavycyan|mediumgrey|white|W|deepyellow|lightgreen|TeXHead|Aspect|undefined|arrowfactor|stdin|fuchsia|legendmaxrelativewidth|heavygrey|intMin|JOIN_IN|down|Magenta|HookHead|orange|dotframe|colorPen|debugging|heavyblue|SE|longdashdotted|UnFill|darkgrey|mediumgreen|deepgreen|black|MarkPath|deepgrey|ENE|currentlight|darkgray|roundjoin|circleprecision|cyan|Align|arrowbarb|EndPoint|up|Center|paleblue|debuggerlines|pi|MidPoint|legendlinelength|darkblue|file3|palered|S|FillDraw|heavygray|barfactor|lightolive|deepred|xformStack|arrowdir|bp|shipped|brown|arrowsizelimit|WNW|NNW|mm|mediumgray|MoveQuiet|springgreen|plain_bounds|solid|darkolive|heavymagenta|dashdotted|unitsquare|SSE|monoPen|DefaultHead|purple|SimpleHead|inf|I|nobasealign|green|JOIN_OUT|realMin|palegreen|WSW|camerafactor|RightSide|darkgreen)\\b",
             "name": "support.constant"
         },
         "type_keywords": {
-            "match": "\\b(real|file|cputime|Label|coords2|coords3|guide|scaleT|slice|framedTransformStack|Legend|pair|bounds|position|transformation|marker|picture|projection|pairOrTriple|marginT|bool|transform|filltype|ScaleT|light|arrowhead|side|int|autoscaleT|indexedTransform|object|path|string|triple|frame|scaling|processtime|align|path3|bool3|pen|coord|hsv)\\b",
+            "match": "\\b(pen|scaleT|marginT|autoscaleT|slice|coord|int|Legend|bool|pair|indexedTransform|transformation|projection|processtime|bool3|light|pairOrTriple|align|marker|filltype|coords3|arrowhead|frame|framedTransformStack|real|scaling|side|transform|file|hsv|path3|Label|position|string|ScaleT|picture|object|triple|path|cputime|coords2|bounds|guide)\\b",
             "name": "support.class"
         },
         "operator_keywords": {
-            "match": "(\\-|\\!\\=|\\<|\\/|\\||\\:\\:|\\>\\=|\\^|\\.\\.|\\%|\\=|\\*|\\<\\=|\\&|\\=\\=|\\>|\\!|\\#|\\-\\-\\-|\\-\\-|\\+)",
+            "match": "(\\*|\\+|\\#|\\-\\-|\\>\\=|\\-|\\,|\\-\\-\\-|\\.\\.|\\<|\\!|\\&|\\=\\=|\\<\\=|\\>|\\=|\\||\\%|\\/|\\^|\\:\\:|\\!\\=)",
             "name": "keyword.operator"
         },
         "prim_type_keywords": {
-            "match": "\\b(code)\\b",
+            "match": "\\b(void|code)\\b",
             "name": "storage.type"
         }
     },
@@ -30,6 +30,10 @@
         {
             "match": "\\b(const|static|explicit|struct|typedef)\\b",
             "name": "storage.modifier"
+        },
+        {
+            "match": "\\b(true|false)\\b",
+            "name": "constant.language"
         },
         {
             "begin": "/\\*",

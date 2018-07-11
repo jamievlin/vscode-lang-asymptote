@@ -16,6 +16,11 @@ def generate_base_pattern():
             'match' : r'\b(const|static|explicit|struct|typedef)\b', 
             'name' : 'storage.modifier'
         },
+        {
+            'match': r'\b(true|false)\b',
+            'name': 'constant.language'
+        },
+
         { 
             'begin' : r'/\*', 
             'end' : r'\*/', 
@@ -85,10 +90,10 @@ def main():
     base_pattern = generate_base_pattern()
     asy_list_raw = sys.stdin.read()
 
-    operator_list = {'='}
+    operator_list = {'=', ','}
     const_list = set()
     type_list = set()
-    prim_type_list = {'code'}
+    prim_type_list = {'code', 'void'}
 
     # print(json.dumps(base_grammar, indent=4))
 
