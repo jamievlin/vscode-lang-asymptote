@@ -53,6 +53,11 @@
                                 "type": "string",
                                 "description": "Path to Asymptote File",
                                 "default": "${file}"
+                            },
+                            "workingDirectory": {
+                                "type": "string",
+                                "description": "Working directory of Asymptote",
+                                "default": "${workspaceFolder}"
                             }
                         }
                     }
@@ -62,7 +67,8 @@
                         "type": "asy",
                         "request": "launch",
                         "name": "Asymptote File",
-                        "program": "${file}"
+                        "program": "${file}",
+                        "workingDirectory": "${workspaceFolder}"
                     }
                 ],
                 "configurationSnippets": [
