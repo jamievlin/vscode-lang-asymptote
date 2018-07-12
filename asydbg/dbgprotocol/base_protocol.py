@@ -12,11 +12,14 @@ def read_msg() -> dict:
 
 
 class DebugProtocol:
-    def __init__(self, seq:int, type_:str):
+    def __init__(self, type_:str):
         self._baseObj = {
-            'seq': seq, 
-            'type_': type_
+            'seq': -1, 
+            'type': type_
         }
+
+    def set_seq(self, seq:int):
+        self._baseObj['seq'] = seq
 
     def create_msg(self) -> str:
         new_obj_txt = json.dumps(self._baseObj)
@@ -28,16 +31,16 @@ class DebugProtocol:
         sys.stdout.flush()
 
 class RequestProtcol(DebugProtocol):
-    def __init__(self, seq:int, command:str, argument=None):
-        super().__init__(seq, type_='request')
+    def __init__(self, command:str, argument=None):
+        super().__init__(type_='request')
         self._baseObj['command'] = command
 
         if argument is not None:
             self._baseObj['arguments'] = argument
 
 class EventProtcol(DebugProtocol):
-    def __init__(self, seq:int, event:str, body=None):
-        super().__init__(seq, type_='event')
+    def __init__(self, event:str, body=None):
+        super().__init__(type_='event')
         self._baseObj['event'] = event
 
         if body is not None:
@@ -46,7 +49,7 @@ class EventProtcol(DebugProtocol):
 class ResponseProtocol(DebugProtocol):
     def __init__(self, request_seq:int, success:bool, 
                 command:str, message:str=None, body=None):
-        super().__init__(request_seq, type_='response')
+        super().__init__(type_='response')
         self._baseObj.update({
             "request_seq": request_seq,
             "success": success,

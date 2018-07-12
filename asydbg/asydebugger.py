@@ -4,37 +4,63 @@ import dbgprotocol.launch_protocol as lp
 import sys
 import subprocess
 import os
+import queue
+import threading
 
 
 def log(txt: str):
     sys.stderr.write(txt)
-    sys.stderr.write('\n')
+    sys.stderr.write('\r\n')
     sys.stderr.flush()
-
 
 class AsymptoteDebugger:
     def __init__(self):
-        self._active = False
+        self._active = True
         self._asyProcess = None
         self._debugMode = True
 
         self._fileName = None
         self._workingDir = None
 
+        self.msgqueue = queue.Queue()
+        self.outqueue = queue.Queue()
+
+        self._asyReadThread = None
+        self._msgFetchThread = threading.Thread(target=self.fetch_vscode_msg)
+        self._msgFetchThread.daemon = True
+        self._msgFetchThread.start()
+
+        self._outQueueThread = threading.Thread(target=self.send_messages)
+        self._outQueueThread.daemon = True
+        self._outQueueThread.start()
+
         self._fin = None
         self._fout = None
 
-    def initialize(self):
-        response = bp.ResponseProtocol(1, True, '')
-        response.send()
+    def send_msg(self, msg: bp.DebugProtocol):
+        self.outqueue.put(msg)
 
-        initializedEvent = bp.EventProtcol(2, 'initialized')
-        initializedEvent.send()
+    def initialize(self, msg):
+        response = bp.ResponseProtocol(msg['seq'], True, 'initialize')
+        self.send_msg(response)
+
+        initializedEvent = bp.EventProtcol('initialized')
+        self.send_msg(initializedEvent)
+
+    def send_messages(self):
+        counter = 1
+        while self._active:
+            msg = self.outqueue.get()
+            msg._baseObj['seq'] = counter
+
+            log('out')
+            log(str(msg._baseObj))
+            counter += 1
+            msg.send()
 
     def disconnect(self, msg):
         assert msg['command'] == 'disconnect'
-        response = bp.ResponseProtocol(1, True, '')
-        response.send()
+        self.send_msg(bp.ResponseProtocol(msg['seq'], True, ''))
 
         if ('terminateDebuggee', True) in msg.items():
                 self._active = False
@@ -44,15 +70,27 @@ class AsymptoteDebugger:
             self._active = False
 
     def kill_asy(self):
-        return 
         if self._asyProcess is not None:
             self._asyProcess.kill()
             self._asyProcess.wait()
 
+    def fetch_asy_msg(self, fin):
+        while self._active:
+            msg = fin.readline()
+            self.msgqueue.put(msg)
+
+    def fetch_vscode_msg(self):
+        while self._active:
+            msg = bp.read_msg()
+            log('in:')
+            log(str(msg))
+            self.msgqueue.put(msg)
+
     def launch(self, msg):
         assert msg['command'] == 'launch'
 
-        asyArgs = ['asy']
+        asyArgs = ['asy', '-noV']
+
         if ('noDebug', True) not in msg['arguments'].items():
             self._debugMode = False
 
@@ -80,26 +118,71 @@ class AsymptoteDebugger:
 
         if self._workingDir is not None:
             asyArgs += ['-o', self._workingDir]
+
         self._asyProcess = subprocess.Popen(args=asyArgs, close_fds=False)
-        
+
+        self._asyReadThread = threading.Thread(target=self.fetch_asy_msg, args=(self._fin))
+        self._asyReadThread.daemon = True
+        self._asyReadThread.start()
+
         # launch
         self._fout.write('import "{0}" as __entry__;\n'.format(self._fileName))
         self._fout.flush()
 
-        log(self._fileName)
+        self.send_msg(bp.ResponseProtocol(msg['seq'], True, ''))
+
+    def report_threads(self, msg):
+        thread_list = []
+        thread_response = bp.ResponseProtocol(msg['seq'], True, '')
+
+        thread_list.append({
+            'id': self._msgFetchThread.ident,
+            'name': self._msgFetchThread.name
+        })
+
+        thread_list.append({
+            'id': threading.main_thread().ident,
+            'name': threading.main_thread().name
+        })
+
+        thread_list.append({
+            'id': self._outQueueThread.ident,
+            'name': self._outQueueThread.name
+        })
+
+        if self._asyReadThread is not None:
+            thread_list.append({
+                'id': self._asyReadThread.ident,
+                'name': self._asyReadThread.name
+            })
+
+        thread_response._baseObj['threads'] = thread_list
+        self.send_msg(thread_response)
+
 
     def event_loop(self):
-        self._active = True
         while self._active:
-            msg = bp.read_msg()
+            msg = self.msgqueue.get()
+            if isinstance(msg, dict):
+                if msg['command'] == 'initialize':
+                    self.initialize(msg)
 
-            if msg['command'] == 'initialize':
-                self.initialize()
+                elif msg['command'] == 'disconnect':
+                    self.disconnect(msg)
 
-            if msg['command'] == 'disconnect':
-                self.disconnect(msg)
+                elif msg['command'] == 'launch':
+                    self.launch(msg)
 
-            if msg['command'] == 'launch':
-                self.launch(msg)
+                elif msg['command'] == 'threads':
+                    self.report_threads(msg)
+            else:
+                log(str(msg))
+
+        self._msgFetchThread.join()
+        self._outQueueThread.join()
+        if self._asyReadThread is not None:
+            self._asyReadThread.join()
+
         self.kill_asy()
+
 
