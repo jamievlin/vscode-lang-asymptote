@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
 
-import asydbg_
+import asydebugger
 import sys
 
+
+def main(args):
+    # for initialize request
+    debugger = asydebugger.AsymptoteDebugger()
+    return debugger.event_loop()
+
+
 if __name__ == '__main__':
-    sys.exit(asydbg_.main(sys.argv) or 0)
+    sys.exit(main(sys.argv) or 0)

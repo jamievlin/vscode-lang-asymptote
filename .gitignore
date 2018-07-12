@@ -5,8 +5,8 @@ vsc-extension-quickstart.md
 tools/asy.list
 tools/publish
 # syntaxes/*.tmLanguage.json
-asydbg/__pychache__/**
+asydbg/__pychache__
 .vscode/settings.json
 tools/make_asy_grammar.py
 
-./**/__pycache__/*
+*.pyc
