@@ -1,5 +1,6 @@
 import json
 import sys
+import typing as ty
 
 def read_msg() -> dict:
     header = sys.stdin.readline()
@@ -19,12 +20,18 @@ class DebugProtocol:
         }
 
     def set_seq(self, seq:int):
-        self._baseObj['seq'] = seq
+        self['seq'] = seq
 
     def create_msg(self) -> str:
         new_obj_txt = json.dumps(self._baseObj)
 
         return 'Content-Length: {0:d}\r\n\r\n{1}'.format(len(new_obj_txt), new_obj_txt)
+
+    def __getitem__(self, key):
+        return self._baseObj[key]
+
+    def __setitem__(self, key, value):
+        self._baseObj[key] = value
 
     def send(self):
         sys.stdout.write(self.create_msg())
@@ -41,25 +48,30 @@ class RequestProtcol(DebugProtocol):
 class EventProtcol(DebugProtocol):
     def __init__(self, event:str, body=None):
         super().__init__(type_='event')
-        self._baseObj['event'] = event
+        self['event'] = event
 
         if body is not None:
-            self._baseObj['body'] = body
+            self['body'] = body
 
 class ResponseProtocol(DebugProtocol):
-    def __init__(self, request_seq:int, success:bool, 
-                command:str, message:str=None, body=None):
+    def __init__(self, original_request: ty.Union[RequestProtcol, dict]=None, success: bool=True,
+        message:str=None, body=None):
+
         super().__init__(type_='response')
         self._baseObj.update({
-            "request_seq": request_seq,
+            "request_seq": -1,
             "success": success,
-            "command": command,
+            "command": ''
             })
 
+        if original_request is not None:
+            self['command'] = original_request['command']
+            self['request_seq'] = original_request['seq']
+
         if message is not None:
-            self._baseObj['message'] = message
+            self['message'] = message
 
         if body is not None:
-            self._baseObj['body'] = body
+            self['body'] = body
         
 

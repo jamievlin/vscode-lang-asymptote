@@ -7,8 +7,8 @@ import os
 import queue
 import threading
 
-
 def log(txt: str):
+    sys.stderr.write('\r\n')
     sys.stderr.write(txt)
     sys.stderr.write('\r\n')
     sys.stderr.flush()
@@ -41,7 +41,7 @@ class AsymptoteDebugger:
         self.outqueue.put(msg)
 
     def initialize(self, msg):
-        response = bp.ResponseProtocol(msg['seq'], True, 'initialize')
+        response = bp.ResponseProtocol(msg)
         self.send_msg(response)
 
         initializedEvent = bp.EventProtcol('initialized')
@@ -51,16 +51,17 @@ class AsymptoteDebugger:
         counter = 1
         while self._active:
             msg = self.outqueue.get()
-            msg._baseObj['seq'] = counter
+            msg['seq'] = counter
+            msg.send()
 
             log('out')
             log(str(msg._baseObj))
             counter += 1
-            msg.send()
+            
 
     def disconnect(self, msg):
         assert msg['command'] == 'disconnect'
-        self.send_msg(bp.ResponseProtocol(msg['seq'], True, ''))
+        self.send_msg(bp.ResponseProtocol(msg))
 
         if ('terminateDebuggee', True) in msg.items():
                 self._active = False
@@ -74,9 +75,15 @@ class AsymptoteDebugger:
             self._asyProcess.kill()
             self._asyProcess.wait()
 
-    def fetch_asy_msg(self, fin):
+    def fetch_asy_msg(self):
         while self._active:
-            msg = fin.readline()
+            if self._asyProcess is None:
+                continue
+
+            msg = self._asyProcess.stdout.readline()
+            msg = msg.decode('ascii')
+            log('asy in')
+            log(msg)
             self.msgqueue.put(msg)
 
     def fetch_vscode_msg(self):
@@ -94,7 +101,8 @@ class AsymptoteDebugger:
         if ('noDebug', True) not in msg['arguments'].items():
             self._debugMode = False
 
-        if os.name != 'nt':
+
+        if os.name != 'nt' and 1 == 0:
             rx, wx = os.pipe()
             ra, wa = os.pipe()
 
@@ -108,8 +116,6 @@ class AsymptoteDebugger:
             self._fin = os.fdopen(ra, 'r')
             self._fout = os.fdopen(wx, 'w')
 
-        else:
-            raise NotImplementedError
 
         launchArgs = lp.LaunchProtocol(msg)
         
@@ -119,21 +125,25 @@ class AsymptoteDebugger:
         if self._workingDir is not None:
             asyArgs += ['-o', self._workingDir]
 
-        self._asyProcess = subprocess.Popen(args=asyArgs, close_fds=False)
+        self._asyProcess = subprocess.Popen(args=asyArgs, close_fds=False, 
+                            stdout=subprocess.PIPE, stdin=subprocess.PIPE)
 
-        self._asyReadThread = threading.Thread(target=self.fetch_asy_msg, args=(self._fin))
+        self._asyReadThread = threading.Thread(target=self.fetch_asy_msg)
         self._asyReadThread.daemon = True
         self._asyReadThread.start()
 
         # launch
-        self._fout.write('import "{0}" as __entry__;\n'.format(self._fileName))
-        self._fout.flush()
 
-        self.send_msg(bp.ResponseProtocol(msg['seq'], True, ''))
+        # self._asyProcess.stdin.write('stop("{0}", 1);\n'.format(self._fileName).encode('ascii'))
+        self._asyProcess.stdin.write(
+            'import "{0}" as __entry__;\n'.format(self._fileName).encode('ascii'))
+        self._asyProcess.stdin.flush()
+
+        self.send_msg(bp.ResponseProtocol(msg))
 
     def report_threads(self, msg):
         thread_list = []
-        thread_response = bp.ResponseProtocol(msg['seq'], True, '')
+        thread_response = bp.ResponseProtocol(msg)
 
         thread_list.append({
             'id': self._msgFetchThread.ident,
@@ -180,6 +190,7 @@ class AsymptoteDebugger:
 
         self._msgFetchThread.join()
         self._outQueueThread.join()
+
         if self._asyReadThread is not None:
             self._asyReadThread.join()
 
