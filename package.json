@@ -6,7 +6,7 @@
     "publisher": "supakornras",
     "repository": {
         "type": "git",
-        "url": "https://gitlab.com/supakorn-ras/vscode-lang-asymptote"
+        "url": "https://github.com/supakorn-ras/vscode-lang-asymptote"
     },
     "license": "SEE LICENSE IN LICENSE.md",
     "engines": {
