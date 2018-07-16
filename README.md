@@ -9,11 +9,17 @@ The official website of Asymptote is at <http://asymptote.sourceforge.net/>.
 
 ## Features
 
-This package mainly highlights asymptote syntax and builtin functions. For now, there is no autocompletion support. 
+This package mainly highlights asymptote syntax and builtin functions. For now, there is no autocompletion support or LSP. 
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+For debugging, if one's Asymptote version is < `2.XX`, make sure to apply the debugger patch in `patches/asydbgpatch.patch` by 
+
+```sh
+cd <path to your asy git repo>
+patch <asydbgpatch.patch location> .
+sudo make install
+```
 
 ## Known Issues
 
