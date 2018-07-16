@@ -1,0 +1,82 @@
+diff --git a/base/plain_debugger.asy b/base/plain_debugger.asy
+index 8568ee0b..1ff520f9 100644
+--- a/base/plain_debugger.asy
++++ b/base/plain_debugger.asy
+@@ -1,4 +1,13 @@
+ int debuggerlines=5;
++bool dbgAdapterMode=false;
++
++file _dbgoutpipe;
++
++void enableDbgAdapter()
++{
++  _dbgoutpipe = output(mode="pipe");
++  dbgAdapterMode=true;
++}
+ 
+ int sourceline(string file, string text)
+ {
+@@ -10,6 +19,7 @@ int sourceline(string file, string text)
+   return 0;
+ }
+ 
++
+ void stop(string file, string text, code s=quote{})
+ {
+   int line=sourceline(file,text);
+@@ -48,13 +58,23 @@ string debugger(string file, int line, int column, code s=quote{})
+     bool help=false;
+     while(true) {
+       if(file != lastfile && file != "-") {source=input(file); lastfile=file;}
+-      write();
+-      for(int i=max(line-debuggerlines,0); i < min(line,source.length); ++i)
+-        write(source[i]);
+-      for(int i=0; i < column-1; ++i)
+-        write(" ",none);
+-      write("^"+(verbose == 5 ? " trace" : ""));
++      if (!dbgAdapterMode) {
++        write(); 
++      }
++      for(int i=max(line-debuggerlines,0); i < min(line,source.length); ++i) {
++        if (!dbgAdapterMode) {
++          write(source[i]);
++        }
++      }
++      for(int i=0; i < column-1; ++i) {
++       if (!dbgAdapterMode) {
++          write(" ",none);
++       }
++      }
+ 
++      if (!dbgAdapterMode) {
++        write("^"+(verbose == 5 ? " trace" : ""));
++      }
+       if(help) {
+         write("c:continue f:file h:help i:inst n:next r:return s:step t:trace q:quit x:exit");
+         help=false;
+@@ -62,7 +82,24 @@ string debugger(string file, int line, int column, code s=quote{})
+ 
+       string Prompt=file+": "+(string) line+"."+(string) column;
+       Prompt += "? [%s] ";
+-      s=getstring(name="debug",default="h",prompt=Prompt,store=false);
++
++      if (!dbgAdapterMode)
++      {
++        s=getstring(name="debug",default="h",prompt=Prompt,store=false);
++      }
++      else
++      {
++        // if asy has a native JSON module... 
++        string dapPrompt = '{"type": "break", "file": "'+file+'", "line": '+(string)line+', "col":'+(string)column+'}';
++        int daplen = length(dapPrompt);
++
++        write(_dbgoutpipe,'Content-Length: '+(string)daplen+'\r\n\r\n');
++        write(_dbgoutpipe,dapPrompt);
++        flush(_dbgoutpipe);
++
++        s=stdin;
++      }
++
+       if(s == "h" || s == "?") {help=true; continue;}
+       if(s == "c" || s == "s" || s == "n" || s == "i" || s == "f" || s == "r")
+         break;

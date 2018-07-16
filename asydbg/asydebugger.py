@@ -80,18 +80,17 @@ class AsymptoteDebugger:
             if self._asyProcess is None:
                 continue
 
-            msg = self._asyProcess.stdout.readline()
-            msg = msg.decode('ascii')
+            msg = bp.read_msg(self._fin)
             log('asy in')
-            log(msg)
-            self.msgqueue.put(msg)
+            log(str(msg))
+            self.msgqueue.put((msg, bp.ProtocolType.asy))
 
     def fetch_vscode_msg(self):
         while self._active:
             msg = bp.read_msg()
             log('in:')
             log(str(msg))
-            self.msgqueue.put(msg)
+            self.msgqueue.put((msg,  bp.ProtocolType.vscode))
 
     def launch(self, msg):
         assert msg['command'] == 'launch'
@@ -102,7 +101,7 @@ class AsymptoteDebugger:
             self._debugMode = False
 
 
-        if os.name != 'nt' and 1 == 0:
+        if os.name != 'nt':
             rx, wx = os.pipe()
             ra, wa = os.pipe()
 
@@ -126,7 +125,7 @@ class AsymptoteDebugger:
             asyArgs += ['-o', self._workingDir]
 
         self._asyProcess = subprocess.Popen(args=asyArgs, close_fds=False, 
-                            stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+                            stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
 
         self._asyReadThread = threading.Thread(target=self.fetch_asy_msg)
         self._asyReadThread.daemon = True
@@ -134,10 +133,10 @@ class AsymptoteDebugger:
 
         # launch
 
-        # self._asyProcess.stdin.write('stop("{0}", 1);\n'.format(self._fileName).encode('ascii'))
-        self._asyProcess.stdin.write(
-            'import "{0}" as __entry__;\n'.format(self._fileName).encode('ascii'))
-        self._asyProcess.stdin.flush()
+        self._fout.write('enableDbgAdapter();\n')
+        self._fout.write('stop("{0}", 1);\n'.format(self._fileName))
+        self._fout.write('import "{0}" as __entry__;\n'.format(self._fileName))
+        self._fout.flush()
 
         self.send_msg(bp.ResponseProtocol(msg))
 
@@ -172,8 +171,8 @@ class AsymptoteDebugger:
 
     def event_loop(self):
         while self._active:
-            msg = self.msgqueue.get()
-            if isinstance(msg, dict):
+            msg, msg_src = self.msgqueue.get()
+            if msg_src == bp.ProtocolType.vscode:
                 if msg['command'] == 'initialize':
                     self.initialize(msg)
 
@@ -185,8 +184,7 @@ class AsymptoteDebugger:
 
                 elif msg['command'] == 'threads':
                     self.report_threads(msg)
-            else:
-                log(str(msg))
+                    
 
         self._msgFetchThread.join()
         self._outQueueThread.join()

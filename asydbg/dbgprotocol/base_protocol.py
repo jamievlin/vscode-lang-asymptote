@@ -2,14 +2,18 @@ import json
 import sys
 import typing as ty
 
-def read_msg() -> dict:
-    header = sys.stdin.readline()
+def read_msg(fin=sys.stdin) -> dict:
+    header = fin.readline()
     assert header.startswith('Content-Length: ')
     bytenum = int(header.replace('Content-Length: ', '', 1))
-    sys.stdin.readline()
+    fin.readline()
 
-    msg = sys.stdin.read(bytenum)
+    msg = fin.read(bytenum)
     return json.loads(msg)
+
+class ProtocolType:
+    asy = 0
+    vscode = 1
 
 
 class DebugProtocol:
