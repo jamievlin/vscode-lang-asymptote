@@ -141,49 +141,44 @@ class AsymptoteDebugger:
         self.send_msg(bp.ResponseProtocol(msg))
 
     def report_threads(self, msg):
-        thread_list = []
-        thread_response = bp.ResponseProtocol(msg)
+        thread_list = [{
+                'id': threading.main_thread().ident,
+                'name': threading.main_thread().name
+            }
+            ]
 
-        thread_list.append({
-            'id': self._msgFetchThread.ident,
-            'name': self._msgFetchThread.name
-        })
+        thread_body = { 'threads': thread_list }
+        self.send_msg(bp.ResponseProtocol(msg, body=thread_body))
 
-        thread_list.append({
-            'id': threading.main_thread().ident,
-            'name': threading.main_thread().name
-        })
+    def send_break(self, asymsg:dict):
+        newevent = bp.EventProtcol('stopped')
+        newevent['body'] = {
+            'reason': 'breakpoint',
+            'threadId': threading.main_thread().ident
+        }
 
-        thread_list.append({
-            'id': self._outQueueThread.ident,
-            'name': self._outQueueThread.name
-        })
-
-        if self._asyReadThread is not None:
-            thread_list.append({
-                'id': self._asyReadThread.ident,
-                'name': self._asyReadThread.name
-            })
-
-        thread_response._baseObj['threads'] = thread_list
-        self.send_msg(thread_response)
-
+        self.send_msg(newevent)
 
     def event_loop(self):
         while self._active:
             msg, msg_src = self.msgqueue.get()
             if msg_src == bp.ProtocolType.vscode:
-                if msg['command'] == 'initialize':
-                    self.initialize(msg)
+                # requests
+                if msg['type'] == 'request':
+                    if msg['command'] == 'initialize':
+                        self.initialize(msg)
+                    elif msg['command'] == 'disconnect':
+                        self.disconnect(msg)
+                    elif msg['command'] == 'launch':
+                        self.launch(msg)
+                    elif msg['command'] == 'threads':
+                        self.report_threads(msg)
+                    elif msg['command'] == 'stackTrace':
+                        raise NotImplementedError
 
-                elif msg['command'] == 'disconnect':
-                    self.disconnect(msg)
-
-                elif msg['command'] == 'launch':
-                    self.launch(msg)
-
-                elif msg['command'] == 'threads':
-                    self.report_threads(msg)
+            else:
+                if msg['type'] == 'break':
+                    self.send_break(msg)
                     
 
         self._msgFetchThread.join()
