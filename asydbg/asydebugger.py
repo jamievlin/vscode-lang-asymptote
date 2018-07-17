@@ -13,14 +13,31 @@ def log(txt: str):
     sys.stderr.write('\r\n')
     sys.stderr.flush()
 
+class BreakCondition:
+    breakpoint = 0
+    stepin = 1
+
 class AsymptoteDebugger:
+    @property
+    def capabilites(self) -> dict:
+        return {
+            'supportsConfigurationDoneRequest': True, 
+            'supportsFunctionBreakpoints': False,
+            'supportsStepBack': False,
+            'supportsCompletionsRequest': False,
+            'supportsTerminateThreadsRequest': False
+        }
+
     def __init__(self):
         self._active = True
         self._asyProcess = None
         self._debugMode = True
+        self._breakCondition = None
+        self._lastBreakInfo = None
 
         self._fileName = None
         self._workingDir = None
+        self.stack_frame_counter = 0
 
         self.msgqueue = queue.Queue()
         self.outqueue = queue.Queue()
@@ -41,7 +58,7 @@ class AsymptoteDebugger:
         self.outqueue.put(msg)
 
     def initialize(self, msg):
-        response = bp.ResponseProtocol(msg)
+        response = bp.ResponseProtocol(msg, body=self.capabilites)
         self.send_msg(response)
 
         initializedEvent = bp.EventProtcol('initialized')
@@ -157,7 +174,30 @@ class AsymptoteDebugger:
             'threadId': threading.main_thread().ident
         }
 
+        self._lastBreakInfo = asymsg
         self.send_msg(newevent)
+
+    def report_stack_trace(self, msg):
+        
+        response = bp.ResponseProtocol(msg)
+        filename = self._lastBreakInfo['file']
+        response['body'] = {
+            'stackFrames': [
+                {
+                    'id': self.stack_frame_counter,
+                    'name': 'asyframe',
+                    'source': {
+                        'name': os.path.basename(filename),
+                        'path': filename
+                    }, 
+                    'line': self._lastBreakInfo['line'],
+                    'column': self._lastBreakInfo['col']
+                }
+            ]
+        }
+
+        self.stack_frame_counter += 1
+        self.send_msg(response)
 
     def event_loop(self):
         while self._active:
@@ -174,7 +214,7 @@ class AsymptoteDebugger:
                     elif msg['command'] == 'threads':
                         self.report_threads(msg)
                     elif msg['command'] == 'stackTrace':
-                        raise NotImplementedError
+                        self.report_stack_trace(msg)
 
             else:
                 if msg['type'] == 'break':
