@@ -37,6 +37,9 @@ class DebugProtocol:
     def __setitem__(self, key, value):
         self._baseObj[key] = value
 
+    def __getattr__(self, attr):
+        return self._baseObj[attr]
+
     def send(self):
         sys.stdout.write(self.create_msg())
         sys.stdout.flush()

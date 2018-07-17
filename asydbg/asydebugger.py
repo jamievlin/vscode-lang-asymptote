@@ -1,6 +1,8 @@
 import dbgprotocol.base_protocol as bp
 import dbgprotocol.launch_protocol as lp
 
+import asydbgparser.data_formats as df
+
 import sys
 import subprocess
 import os
@@ -34,6 +36,7 @@ class AsymptoteDebugger:
         self._debugMode = True
         self._breakCondition = None
         self._lastBreakInfo = None
+        self._breakpoints = {}
 
         self._fileName = None
         self._workingDir = None
@@ -63,6 +66,7 @@ class AsymptoteDebugger:
 
         initializedEvent = bp.EventProtcol('initialized')
         self.send_msg(initializedEvent)
+
 
     def send_messages(self):
         counter = 1
@@ -110,7 +114,7 @@ class AsymptoteDebugger:
             self.msgqueue.put((msg,  bp.ProtocolType.vscode))
 
     def launch(self, msg):
-        assert msg['command'] == 'launch'
+        launchArgs = lp.LaunchProtocol(msg)
 
         asyArgs = ['asy', '-noV']
 
@@ -131,9 +135,6 @@ class AsymptoteDebugger:
 
             self._fin = os.fdopen(ra, 'r')
             self._fout = os.fdopen(wx, 'w')
-
-
-        launchArgs = lp.LaunchProtocol(msg)
         
         self._fileName = launchArgs.filename
         self._workingDir = launchArgs.workingDir
@@ -151,11 +152,11 @@ class AsymptoteDebugger:
         # launch
 
         self._fout.write('enableDbgAdapter();\n')
-        self._fout.write('stop("{0}", 1);\n'.format(self._fileName))
-        self._fout.write('import "{0}" as __entry__;\n'.format(self._fileName))
-        self._fout.flush()
-
+        # self._fout.write('stop("{0}", 1);\n'.format(self._fileName))
         self.send_msg(bp.ResponseProtocol(msg))
+
+    def handle_breakpoints(self, msg):
+        assert msg.event == 'breakpoint'
 
     def report_threads(self, msg):
         thread_list = [{
@@ -177,10 +178,33 @@ class AsymptoteDebugger:
         self._lastBreakInfo = asymsg
         self.send_msg(newevent)
 
+    def set_breakpoints(self, msg):
+        breakpoints_args = df.JSInterface(msg['arguments'])
+        filename = breakpoints_args.source.path
+
+        self._breakpoints[filename] = breakpoints_args.breakpoints
+
+        for filename in self._breakpoints:
+            for bp_ in self._breakpoints[filename]:
+                breakpoint_txt = 'stop("{0}", {1:d});'.format(
+                    filename, bp_['line'])
+                self._fout.write(breakpoint_txt + '\n')
+                log(breakpoint_txt)
+
+        response = bp.ResponseProtocol(msg, body={
+            'breakpoints': [
+                {'verified': False} 
+            ] * len(self._breakpoints[filename])
+        })
+
+        self.send_msg(response)
+
     def report_stack_trace(self, msg):
         
         response = bp.ResponseProtocol(msg)
         filename = self._lastBreakInfo['file']
+
+        # NOTE: Until a proper stackframe is implemented, will remain incomplete. 
         response['body'] = {
             'stackFrames': [
                 {
@@ -199,22 +223,36 @@ class AsymptoteDebugger:
         self.stack_frame_counter += 1
         self.send_msg(response)
 
+    def finish_config(self, msg):
+        self._fout.write('import "{0}" as __entry__;\n'.format(self._fileName))
+        self._fout.flush()
+
+        self.send_msg(bp.ResponseProtocol(msg))
+
     def event_loop(self):
         while self._active:
             msg, msg_src = self.msgqueue.get()
             if msg_src == bp.ProtocolType.vscode:
-                # requests
                 if msg['type'] == 'request':
-                    if msg['command'] == 'initialize':
+                    cmd = msg['command']
+                    if cmd == 'initialize':
                         self.initialize(msg)
-                    elif msg['command'] == 'disconnect':
+                    elif cmd == 'disconnect':
                         self.disconnect(msg)
-                    elif msg['command'] == 'launch':
+                    elif cmd == 'launch':
                         self.launch(msg)
-                    elif msg['command'] == 'threads':
+                    elif cmd == 'threads':
                         self.report_threads(msg)
-                    elif msg['command'] == 'stackTrace':
+                    elif cmd == 'stackTrace':
                         self.report_stack_trace(msg)
+                    elif cmd == 'setBreakpoints':
+                        self.set_breakpoints(msg)
+                    elif cmd == 'configurationDone':
+                        self.finish_config(msg)
+
+                elif msg.type == 'event':
+                    if msg.event == 'breakpoint':
+                        self.handle_breakpoints(msg)
 
             else:
                 if msg['type'] == 'break':
