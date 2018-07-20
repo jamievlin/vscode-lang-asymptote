@@ -34,54 +34,6 @@
                 "language": "asymptote"
             }
         ],
-        "debuggers": [
-            {
-                "type": "asy",
-                "label": "Asymptote",
-                "program": "./asydbg",
-                "windows": {
-                    "runtime": "python"
-                },
-                "runtime": "python3",
-                "configurationAttributes": {
-                    "launch": {
-                        "required": [
-                            "program"
-                        ],
-                        "properties": {
-                            "program": {
-                                "type": "string",
-                                "description": "Path to Asymptote File",
-                                "default": "${file}"
-                            },
-                            "workingDirectory": {
-                                "type": "string",
-                                "description": "Working directory of Asymptote",
-                                "default": "${workspaceFolder}"
-                            }
-                        }
-                    }
-                },
-                "initialConfigurations": [
-                    {
-                        "type": "asy",
-                        "request": "launch",
-                        "name": "Asymptote File",
-                        "program": "${file}",
-                        "workingDirectory": "${workspaceFolder}"
-                    }
-                ],
-                "configurationSnippets": [
-                    {
-                        "label": "Asymptote: Launch",
-                        "description": "A configuration for lanching asympote file. ",
-                        "body": {
-                            "program": "Asy file"
-                        }
-                    }
-                ]
-            }
-        ],
         "grammars": [
             {
                 "language": "asymptote",
@@ -89,8 +41,5 @@
                 "path": "./syntaxes/asymptote.tmLanguage.json"
             }
         ]
-    },
-    "dependencies": {
-        "vscode-debugprotocol": "^1.29.0"
     }
 }
